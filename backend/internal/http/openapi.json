@@ -1,0 +1,243 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Hybrid Dating API",
+    "version": "1.0.0",
+    "description": "Backend API for auth, onboarding, discovery, wallet, chats, referrals, and profile management."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register/start": {
+      "post": {
+        "summary": "Start phone registration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string"
+                  },
+                  "referralCode": {
+                    "type": "string"
+                  }
+                },
+                "required": ["phone"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OTP session created"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register/verify-otp": {
+      "post": {
+        "summary": "Verify registration OTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "otpSessionId": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  }
+                },
+                "required": ["otpSessionId", "code"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registration completed"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login/start": {
+      "post": {
+        "summary": "Start login OTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "phone": {
+                    "type": "string"
+                  }
+                },
+                "required": ["phone"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OTP session created"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login/verify-otp": {
+      "post": {
+        "summary": "Verify login OTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "otpSessionId": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  }
+                },
+                "required": ["otpSessionId", "code"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login completed"
+          }
+        }
+      }
+    },
+    "/api/v1/home": {
+      "get": {
+        "summary": "Get home payload",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Home payload" }
+        }
+      }
+    },
+    "/api/v1/discover": {
+      "get": {
+        "summary": "Get discovery feed",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Discovery payload" }
+        }
+      }
+    },
+    "/api/v1/discover/actions": {
+      "post": {
+        "summary": "Like, pass, super like, or undo",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetUserId": { "type": "string" },
+                  "action": { "type": "string", "enum": ["like", "pass", "super_like", "undo"] }
+                },
+                "required": ["targetUserId", "action"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Action applied" }
+        }
+      }
+    },
+    "/api/v1/chats": {
+      "get": {
+        "summary": "List chats",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Chats list" }
+        }
+      }
+    },
+    "/api/v1/wallet": {
+      "get": {
+        "summary": "Get wallet and catalog",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Wallet payload" }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "summary": "Get current user profile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Profile" }
+        }
+      },
+      "patch": {
+        "summary": "Update current user profile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Updated profile" }
+        }
+      }
+    }
+  }
+}
