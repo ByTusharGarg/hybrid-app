@@ -3,16 +3,21 @@ package domain
 import "time"
 
 const (
-	WelcomeBonusSparks  = 100
-	ReferralJoinBonus   = 50
-	ReferralReward      = 100
-	DailyLoginReward    = 30
-	BoostCost           = 20
-	SuperLikeCost       = 10
-	UndoCost            = 5
-	LikesRevealCost     = 25
-	LikeRefillCost      = 15
-	DefaultDailyLikeCap = 10
+	WelcomeBonusSparks   = 100
+	ReferralJoinBonus    = 50
+	ReferralReward       = 100
+	DailyLoginReward     = 30
+	BoostCost            = 20
+	SuperLikeCost        = 10
+	UndoCost             = 5
+	LikesRevealCost      = 25
+	LikeRefillCost       = 15
+	DefaultDailyLikeCap  = 10
+	WebSubscriptionCost  = 15
+	WebMonthlyCredits    = 1000
+	WebTextCreditCost    = 1
+	WebImageCreditCost   = 5
+	WebExplicitImageCost = 20
 )
 
 type User struct {
@@ -30,16 +35,23 @@ type User struct {
 	CompatibilityTags    []string       `json:"compatibilityTags"`
 	ReferralCode         string         `json:"referralCode"`
 	ReferredBy           string         `json:"referredBy,omitempty"`
+	PhoneVerified        bool           `json:"phoneVerified"`
 	VerificationStatus   string         `json:"verificationStatus"`
+	LiveVideoStatus      string         `json:"liveVideoStatus"`
 	OnboardingCompleted  bool           `json:"onboardingCompleted"`
 	ProfileCompletion    int            `json:"profileCompletion"`
 	SparksBalance        int            `json:"sparksBalance"`
+	WebCreditsBalance    int            `json:"webCreditsBalance"`
 	DailyLikeQuota       int            `json:"dailyLikeQuota"`
 	LastLikeQuotaResetAt time.Time      `json:"lastLikeQuotaResetAt"`
 	LastLoginAt          time.Time      `json:"lastLoginAt"`
 	LoginStreak          int            `json:"loginStreak"`
 	PendingBanner        string         `json:"pendingBanner,omitempty"`
 	SubscriptionTier     string         `json:"subscriptionTier"`
+	PremiumUntil         time.Time      `json:"premiumUntil,omitempty"`
+	VouchedBadge         bool           `json:"vouchedBadge"`
+	VouchedBy            string         `json:"vouchedBy,omitempty"`
+	SafetySettings       map[string]any `json:"safetySettings"`
 	HideFromCities       []string       `json:"hideFromCities"`
 	InstagramHandle      string         `json:"instagramHandle,omitempty"`
 	CreatedAt            time.Time      `json:"createdAt"`

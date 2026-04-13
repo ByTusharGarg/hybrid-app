@@ -77,15 +77,24 @@ func (s *AuthService) FinishRegistration(otpSessionID, code string) (*domain.Use
 		CompatibilityTags:    []string{},
 		ReferralCode:         strings.ToUpper("SPK" + strings.TrimPrefix(s.newID("code"), "code_")),
 		ReferredBy:           referredBy,
+		PhoneVerified:        true,
 		VerificationStatus:   "pending",
+		LiveVideoStatus:      "not_started",
 		OnboardingCompleted:  false,
 		ProfileCompletion:    10,
 		SparksBalance:        0,
+		WebCreditsBalance:    0,
 		DailyLikeQuota:       domain.DefaultDailyLikeCap,
 		LastLikeQuotaResetAt: now,
 		SubscriptionTier:     "free",
-		CreatedAt:            now,
-		UpdatedAt:            now,
+		SafetySettings: map[string]any{
+			"e2ee":                  true,
+			"blockScreenshots":      true,
+			"iosRecordingDetection": true,
+			"mediaExport":           "restricted",
+		},
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 	if err := s.repo.SaveUser(user); err != nil {
 		return nil, "", false, err
@@ -128,6 +137,7 @@ func (s *AuthService) FinishLogin(otpSessionID, code string) (*domain.User, stri
 	if user == nil {
 		return nil, "", 0, ErrUserNotRegistered
 	}
+	user.PhoneVerified = true
 
 	reward := 0
 	now := time.Now().UTC()

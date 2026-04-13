@@ -20,6 +20,7 @@ var (
 	ErrTargetUserNotFound = errors.New("target user not found")
 	ErrUserNotRegistered  = errors.New("user not registered")
 	ErrUnsupportedAction  = errors.New("unsupported action")
+	ErrNotEnoughCredits   = errors.New("not enough web credits")
 )
 
 type baseService struct {

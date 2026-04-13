@@ -57,16 +57,23 @@ CREATE TABLE IF NOT EXISTS users (
 	compatibility_tags JSONB NOT NULL DEFAULT '[]',
 	referral_code TEXT UNIQUE NOT NULL,
 	referred_by TEXT NOT NULL DEFAULT '',
+	phone_verified BOOLEAN NOT NULL DEFAULT FALSE,
 	verification_status TEXT NOT NULL,
+	live_video_status TEXT NOT NULL DEFAULT 'not_started',
 	onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE,
 	profile_completion INT NOT NULL DEFAULT 0,
 	sparks_balance INT NOT NULL DEFAULT 0,
+	web_credits_balance INT NOT NULL DEFAULT 0,
 	daily_like_quota INT NOT NULL DEFAULT 10,
 	last_like_quota_reset_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	last_login_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	login_streak INT NOT NULL DEFAULT 0,
 	pending_banner TEXT NOT NULL DEFAULT '',
 	subscription_tier TEXT NOT NULL DEFAULT 'free',
+	premium_until TIMESTAMPTZ,
+	vouched_badge BOOLEAN NOT NULL DEFAULT FALSE,
+	vouched_by TEXT NOT NULL DEFAULT '',
+	safety_settings JSONB NOT NULL DEFAULT '{}',
 	hide_from_cities JSONB NOT NULL DEFAULT '[]',
 	instagram_handle TEXT NOT NULL DEFAULT '',
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -153,7 +160,14 @@ INSERT INTO spark_packages (id, name, sparks, price_inr, description) VALUES
 	('spark_100', 'Starter Sparks', 100, 99, 'Perfect for boosts and super likes.'),
 	('spark_500', 'Power Pack', 500, 399, 'Great value for active daters.'),
 	('spark_1200', 'VIP Pack', 1200, 799, 'Heavy-use bundle with extra reach.')
-ON CONFLICT (id) DO NOTHING;`
+ON CONFLICT (id) DO NOTHING;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS live_video_status TEXT NOT NULL DEFAULT 'not_started';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS web_credits_balance INT NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_until TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS vouched_badge BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS vouched_by TEXT NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS safety_settings JSONB NOT NULL DEFAULT '{}';`
 	_, err := r.db.ExecContext(ctx, schema)
 	return err
 }
@@ -215,27 +229,31 @@ func (r *Repository) FindUserByID(id string) (*domain.User, error) {
 func (r *Repository) SaveUser(user *domain.User) error {
 	_, err := r.db.Exec(`INSERT INTO users (
 		id, phone, name, bio, gender, interested_in, city, date_of_birth, photos, interests, questionnaire, compatibility_tags,
-		referral_code, referred_by, verification_status, onboarding_completed, profile_completion, sparks_balance, daily_like_quota,
-		last_like_quota_reset_at, last_login_at, login_streak, pending_banner, subscription_tier, hide_from_cities, instagram_handle,
-		created_at, updated_at
+		referral_code, referred_by, phone_verified, verification_status, live_video_status, onboarding_completed, profile_completion,
+		sparks_balance, web_credits_balance, daily_like_quota, last_like_quota_reset_at, last_login_at, login_streak, pending_banner,
+		subscription_tier, premium_until, vouched_badge, vouched_by, safety_settings, hide_from_cities, instagram_handle, created_at, updated_at
 	) VALUES (
-		$1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9::jsonb,$10::jsonb,$11::jsonb,$12::jsonb,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25::jsonb,$26,$27,$28
+		$1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9::jsonb,$10::jsonb,$11::jsonb,$12::jsonb,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30::jsonb,$31::jsonb,$32,$33,$34
 	) ON CONFLICT (id) DO UPDATE SET
 		phone=EXCLUDED.phone, name=EXCLUDED.name, bio=EXCLUDED.bio, gender=EXCLUDED.gender,
 		interested_in=EXCLUDED.interested_in, city=EXCLUDED.city, date_of_birth=EXCLUDED.date_of_birth,
 		photos=EXCLUDED.photos, interests=EXCLUDED.interests, questionnaire=EXCLUDED.questionnaire,
 		compatibility_tags=EXCLUDED.compatibility_tags, referral_code=EXCLUDED.referral_code, referred_by=EXCLUDED.referred_by,
-		verification_status=EXCLUDED.verification_status, onboarding_completed=EXCLUDED.onboarding_completed,
-		profile_completion=EXCLUDED.profile_completion, sparks_balance=EXCLUDED.sparks_balance, daily_like_quota=EXCLUDED.daily_like_quota,
+		phone_verified=EXCLUDED.phone_verified, verification_status=EXCLUDED.verification_status,
+		live_video_status=EXCLUDED.live_video_status, onboarding_completed=EXCLUDED.onboarding_completed,
+		profile_completion=EXCLUDED.profile_completion, sparks_balance=EXCLUDED.sparks_balance,
+		web_credits_balance=EXCLUDED.web_credits_balance, daily_like_quota=EXCLUDED.daily_like_quota,
 		last_like_quota_reset_at=EXCLUDED.last_like_quota_reset_at, last_login_at=EXCLUDED.last_login_at, login_streak=EXCLUDED.login_streak,
-		pending_banner=EXCLUDED.pending_banner, subscription_tier=EXCLUDED.subscription_tier, hide_from_cities=EXCLUDED.hide_from_cities,
-		instagram_handle=EXCLUDED.instagram_handle, created_at=EXCLUDED.created_at, updated_at=EXCLUDED.updated_at`,
+		pending_banner=EXCLUDED.pending_banner, subscription_tier=EXCLUDED.subscription_tier, premium_until=EXCLUDED.premium_until,
+		vouched_badge=EXCLUDED.vouched_badge, vouched_by=EXCLUDED.vouched_by, safety_settings=EXCLUDED.safety_settings,
+		hide_from_cities=EXCLUDED.hide_from_cities, instagram_handle=EXCLUDED.instagram_handle, created_at=EXCLUDED.created_at, updated_at=EXCLUDED.updated_at`,
 		user.ID, user.Phone, user.Name, user.Bio, user.Gender,
 		mustJSON(user.InterestedIn), user.City, user.DateOfBirth, mustJSON(user.Photos), mustJSON(user.Interests),
-		mustJSON(user.Questionnaire), mustJSON(user.CompatibilityTags), user.ReferralCode, user.ReferredBy, user.VerificationStatus,
-		user.OnboardingCompleted, user.ProfileCompletion, user.SparksBalance, user.DailyLikeQuota, user.LastLikeQuotaResetAt,
-		user.LastLoginAt, user.LoginStreak, user.PendingBanner, user.SubscriptionTier, mustJSON(user.HideFromCities), user.InstagramHandle,
-		user.CreatedAt, user.UpdatedAt)
+		mustJSON(user.Questionnaire), mustJSON(user.CompatibilityTags), user.ReferralCode, user.ReferredBy, user.PhoneVerified,
+		user.VerificationStatus, user.LiveVideoStatus, user.OnboardingCompleted, user.ProfileCompletion, user.SparksBalance,
+		user.WebCreditsBalance, user.DailyLikeQuota, user.LastLikeQuotaResetAt, user.LastLoginAt, user.LoginStreak, user.PendingBanner,
+		user.SubscriptionTier, nullTime(user.PremiumUntil), user.VouchedBadge, user.VouchedBy, mustJSON(user.SafetySettings),
+		mustJSON(user.HideFromCities), user.InstagramHandle, user.CreatedAt, user.UpdatedAt)
 	return err
 }
 
@@ -464,7 +482,7 @@ func (r *Repository) ListSparkPackages() ([]domain.SparkPackage, error) {
 }
 
 func userColumns() string {
-	return `id, phone, name, bio, gender, interested_in, city, date_of_birth, photos, interests, questionnaire, compatibility_tags, referral_code, referred_by, verification_status, onboarding_completed, profile_completion, sparks_balance, daily_like_quota, last_like_quota_reset_at, last_login_at, login_streak, pending_banner, subscription_tier, hide_from_cities, instagram_handle, created_at, updated_at`
+	return `id, phone, name, bio, gender, interested_in, city, date_of_birth, photos, interests, questionnaire, compatibility_tags, referral_code, referred_by, phone_verified, verification_status, live_video_status, onboarding_completed, profile_completion, sparks_balance, web_credits_balance, daily_like_quota, last_like_quota_reset_at, last_login_at, login_streak, pending_banner, subscription_tier, premium_until, vouched_badge, vouched_by, safety_settings, hide_from_cities, instagram_handle, created_at, updated_at`
 }
 
 func (r *Repository) findUser(query string, arg any) (*domain.User, error) {
@@ -474,13 +492,15 @@ func (r *Repository) findUser(query string, arg any) (*domain.User, error) {
 
 func scanUser(scanner interface{ Scan(...any) error }) (*domain.User, error) {
 	var user domain.User
-	var interestedIn, photos, interests, questionnaire, compatibilityTags, hideFromCities []byte
+	var interestedIn, photos, interests, questionnaire, compatibilityTags, safetySettings, hideFromCities []byte
+	var premiumUntil sql.NullTime
 	if err := scanner.Scan(
 		&user.ID, &user.Phone, &user.Name, &user.Bio, &user.Gender,
 		&interestedIn, &user.City, &user.DateOfBirth, &photos, &interests, &questionnaire, &compatibilityTags,
-		&user.ReferralCode, &user.ReferredBy, &user.VerificationStatus, &user.OnboardingCompleted, &user.ProfileCompletion,
-		&user.SparksBalance, &user.DailyLikeQuota, &user.LastLikeQuotaResetAt, &user.LastLoginAt, &user.LoginStreak,
-		&user.PendingBanner, &user.SubscriptionTier, &hideFromCities, &user.InstagramHandle, &user.CreatedAt, &user.UpdatedAt,
+		&user.ReferralCode, &user.ReferredBy, &user.PhoneVerified, &user.VerificationStatus, &user.LiveVideoStatus,
+		&user.OnboardingCompleted, &user.ProfileCompletion, &user.SparksBalance, &user.WebCreditsBalance, &user.DailyLikeQuota,
+		&user.LastLikeQuotaResetAt, &user.LastLoginAt, &user.LoginStreak, &user.PendingBanner, &user.SubscriptionTier,
+		&premiumUntil, &user.VouchedBadge, &user.VouchedBy, &safetySettings, &hideFromCities, &user.InstagramHandle, &user.CreatedAt, &user.UpdatedAt,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -500,6 +520,12 @@ func scanUser(scanner interface{ Scan(...any) error }) (*domain.User, error) {
 		return nil, err
 	}
 	if err := json.Unmarshal(compatibilityTags, &user.CompatibilityTags); err != nil {
+		return nil, err
+	}
+	if premiumUntil.Valid {
+		user.PremiumUntil = premiumUntil.Time
+	}
+	if err := json.Unmarshal(safetySettings, &user.SafetySettings); err != nil {
 		return nil, err
 	}
 	if err := json.Unmarshal(hideFromCities, &user.HideFromCities); err != nil {

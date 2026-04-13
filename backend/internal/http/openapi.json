@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Hybrid Dating API",
-    "version": "1.0.0",
-    "description": "Backend API for auth, onboarding, discovery, wallet, chats, referrals, and profile management."
+    "version": "1.1.0",
+    "description": "Backend API for auth, onboarding, discovery, chats, wallet, referrals, profile management, vault security, AI bridge, portal SSO, and web credit billing."
   },
   "servers": [
     {
@@ -57,7 +57,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["phone"]
+                "required": [
+                  "phone"
+                ]
               }
             }
           }
@@ -96,7 +98,10 @@
                     "type": "string"
                   }
                 },
-                "required": ["otpSessionId", "code"]
+                "required": [
+                  "otpSessionId",
+                  "code"
+                ]
               }
             }
           }
@@ -122,7 +127,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["phone"]
+                "required": [
+                  "phone"
+                ]
               }
             }
           }
@@ -151,7 +158,10 @@
                     "type": "string"
                   }
                 },
-                "required": ["otpSessionId", "code"]
+                "required": [
+                  "otpSessionId",
+                  "code"
+                ]
               }
             }
           }
@@ -163,28 +173,40 @@
         }
       }
     },
-    "/api/v1/home": {
-      "get": {
-        "summary": "Get home payload",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": { "description": "Home payload" }
-        }
-      }
-    },
-    "/api/v1/discover": {
-      "get": {
-        "summary": "Get discovery feed",
-        "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": { "description": "Discovery payload" }
-        }
-      }
-    },
-    "/api/v1/discover/actions": {
+    "/api/v1/auth/portal/link": {
       "post": {
-        "summary": "Like, pass, super like, or undo",
-        "security": [{ "bearerAuth": [] }],
+        "summary": "Create a deep-link SSO token for the secure web portal",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "destination": {
+                    "type": "string",
+                    "example": "ai"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Portal link created"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/portal/exchange": {
+      "post": {
+        "summary": "Exchange a portal token for a web session",
         "requestBody": {
           "required": true,
           "content": {
@@ -192,50 +214,752 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "targetUserId": { "type": "string" },
-                  "action": { "type": "string", "enum": ["like", "pass", "super_like", "undo"] }
+                  "portalToken": {
+                    "type": "string"
+                  }
                 },
-                "required": ["targetUserId", "action"]
+                "required": [
+                  "portalToken"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Action applied" }
+          "200": {
+            "description": "Portal session exchanged"
+          },
+          "401": {
+            "description": "Invalid portal token"
+          }
+        }
+      }
+    },
+    "/api/v1/home": {
+      "get": {
+        "summary": "Get home payload",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Home payload"
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/questionnaire": {
+      "post": {
+        "summary": "Save onboarding questionnaire answers",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "answers": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "required": [
+                  "answers"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Questionnaire saved"
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/gender-verification": {
+      "post": {
+        "summary": "Update verification status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "example": "verified"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification updated"
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/live-verification/start": {
+      "post": {
+        "summary": "Start live video verification",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Live verification session created"
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/live-verification/complete": {
+      "post": {
+        "summary": "Complete live video verification",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "verdict": {
+                    "type": "string",
+                    "enum": [
+                      "verified",
+                      "review",
+                      "rejected"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Live verification decision saved"
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/profile": {
+      "post": {
+        "summary": "Complete profile setup",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile completed"
+          }
+        }
+      }
+    },
+    "/api/v1/discover": {
+      "get": {
+        "summary": "Get discovery feed",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Discovery payload"
+          }
+        }
+      }
+    },
+    "/api/v1/discover/actions": {
+      "post": {
+        "summary": "Like, pass, super like, or undo",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetUserId": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "like",
+                      "pass",
+                      "super_like",
+                      "undo"
+                    ]
+                  }
+                },
+                "required": [
+                  "targetUserId",
+                  "action"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Action applied"
+          }
+        }
+      }
+    },
+    "/api/v1/matches": {
+      "get": {
+        "summary": "List matches",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matches list"
+          }
+        }
+      }
+    },
+    "/api/v1/likes-you": {
+      "get": {
+        "summary": "List users who liked the current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Likes-you payload"
+          }
         }
       }
     },
     "/api/v1/chats": {
       "get": {
         "summary": "List chats",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
-          "200": { "description": "Chats list" }
+          "200": {
+            "description": "Chats list"
+          }
+        }
+      }
+    },
+    "/api/v1/chats/{chatId}": {
+      "get": {
+        "summary": "List chat messages",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chatId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages list"
+          }
+        }
+      }
+    },
+    "/api/v1/chats/{chatId}/messages": {
+      "post": {
+        "summary": "Send a chat message",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chatId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "example": "text"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "giftId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message created"
+          }
+        }
+      }
+    },
+    "/api/v1/activity": {
+      "get": {
+        "summary": "Get activity center",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity payload"
+          }
         }
       }
     },
     "/api/v1/wallet": {
       "get": {
         "summary": "Get wallet and catalog",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
-          "200": { "description": "Wallet payload" }
+          "200": {
+            "description": "Wallet payload"
+          }
+        }
+      }
+    },
+    "/api/v1/wallet/daily-login": {
+      "post": {
+        "summary": "Claim or refresh daily login reward",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reward payload"
+          }
+        }
+      }
+    },
+    "/api/v1/wallet/boost": {
+      "post": {
+        "summary": "Spend sparks for a profile boost",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Boost applied"
+          }
+        }
+      }
+    },
+    "/api/v1/wallet/like-refill": {
+      "post": {
+        "summary": "Refill likes using sparks",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Like refill applied"
+          }
+        }
+      }
+    },
+    "/api/v1/referrals": {
+      "get": {
+        "summary": "Get referral center",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Referral center"
+          }
         }
       }
     },
     "/api/v1/me": {
       "get": {
         "summary": "Get current user profile",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
-          "200": { "description": "Profile" }
+          "200": {
+            "description": "Profile"
+          }
         }
       },
       "patch": {
         "summary": "Update current user profile",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
         "responses": {
-          "200": { "description": "Updated profile" }
+          "200": {
+            "description": "Updated profile"
+          }
+        }
+      }
+    },
+    "/api/v1/security/vault": {
+      "get": {
+        "summary": "Get vault security settings for the current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vault status"
+          }
+        }
+      }
+    },
+    "/api/v1/vouch/status": {
+      "get": {
+        "summary": "Get current vouch and trust status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vouch status"
+          }
+        }
+      }
+    },
+    "/api/v1/vouch/invite": {
+      "post": {
+        "summary": "Create a vouch invite message",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inviteeName": {
+                    "type": "string"
+                  },
+                  "inviteePhone": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invite payload"
+          }
+        }
+      }
+    },
+    "/api/v1/vouch/confirm": {
+      "post": {
+        "summary": "Confirm a vouch for another user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "targetUserId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "targetUserId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vouch confirmed"
+          }
+        }
+      }
+    },
+    "/api/v1/ai/personas": {
+      "get": {
+        "summary": "List AI personas for native or web surfaces",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "surface",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "native",
+                "web"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Persona list"
+          }
+        }
+      }
+    },
+    "/api/v1/ai/teaser": {
+      "post": {
+        "summary": "Chat with the AI teaser or route to web for locked content",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "surface": {
+                    "type": "string",
+                    "enum": [
+                      "native",
+                      "web"
+                    ]
+                  },
+                  "personaId": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "requestImage": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI teaser response"
+          }
+        }
+      }
+    },
+    "/api/v1/web/wallet": {
+      "get": {
+        "summary": "Get web subscription and credit wallet",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Web wallet"
+          }
+        }
+      }
+    },
+    "/api/v1/web/billing/subscribe": {
+      "post": {
+        "summary": "Activate the monthly web credit subscription",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "planId": {
+                    "type": "string",
+                    "example": "web_plus_1000"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription activated"
+          }
+        }
+      }
+    },
+    "/api/v1/web/billing/consume": {
+      "post": {
+        "summary": "Consume web credits for inference",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "feature": {
+                    "type": "string",
+                    "enum": [
+                      "text",
+                      "image",
+                      "explicit_image"
+                    ]
+                  },
+                  "units": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "feature"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credits consumed"
+          }
+        }
+      }
+    },
+    "/api/v1/web/inference/policy": {
+      "get": {
+        "summary": "Get inference throttling and routing policy",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inference policy"
+          }
         }
       }
     }

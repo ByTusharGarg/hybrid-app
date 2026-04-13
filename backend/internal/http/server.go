@@ -35,10 +35,13 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /api/v1/auth/register/verify-otp", s.handleRegisterVerify)
 	s.mux.HandleFunc("POST /api/v1/auth/login/start", s.handleLoginStart)
 	s.mux.HandleFunc("POST /api/v1/auth/login/verify-otp", s.handleLoginVerify)
+	s.mux.HandleFunc("POST /api/v1/auth/portal/exchange", s.handlePortalExchange)
 
 	s.mux.HandleFunc("GET /api/v1/home", s.authed(s.handleHome))
 	s.mux.HandleFunc("POST /api/v1/onboarding/questionnaire", s.authed(s.handleQuestionnaire))
 	s.mux.HandleFunc("POST /api/v1/onboarding/gender-verification", s.authed(s.handleGenderVerification))
+	s.mux.HandleFunc("POST /api/v1/onboarding/live-verification/start", s.authed(s.handleLiveVerificationStart))
+	s.mux.HandleFunc("POST /api/v1/onboarding/live-verification/complete", s.authed(s.handleLiveVerificationComplete))
 	s.mux.HandleFunc("POST /api/v1/onboarding/profile", s.authed(s.handleProfileSetup))
 
 	s.mux.HandleFunc("GET /api/v1/discover", s.authed(s.handleDiscover))
@@ -58,6 +61,17 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/v1/referrals", s.authed(s.handleReferrals))
 	s.mux.HandleFunc("GET /api/v1/me", s.authed(s.handleMe))
 	s.mux.HandleFunc("PATCH /api/v1/me", s.authed(s.handleUpdateMe))
+	s.mux.HandleFunc("GET /api/v1/security/vault", s.authed(s.handleVaultStatus))
+	s.mux.HandleFunc("GET /api/v1/vouch/status", s.authed(s.handleVouchStatus))
+	s.mux.HandleFunc("POST /api/v1/vouch/invite", s.authed(s.handleVouchInvite))
+	s.mux.HandleFunc("POST /api/v1/vouch/confirm", s.authed(s.handleVouchConfirm))
+	s.mux.HandleFunc("GET /api/v1/ai/personas", s.authed(s.handleAIPersonas))
+	s.mux.HandleFunc("POST /api/v1/ai/teaser", s.authed(s.handleAITeaser))
+	s.mux.HandleFunc("POST /api/v1/auth/portal/link", s.authed(s.handlePortalLink))
+	s.mux.HandleFunc("GET /api/v1/web/wallet", s.authed(s.handleWebWallet))
+	s.mux.HandleFunc("POST /api/v1/web/billing/subscribe", s.authed(s.handleWebSubscribe))
+	s.mux.HandleFunc("POST /api/v1/web/billing/consume", s.authed(s.handleWebConsume))
+	s.mux.HandleFunc("GET /api/v1/web/inference/policy", s.authed(s.handleInferencePolicy))
 }
 
 func withCORS(next http.Handler) http.Handler {

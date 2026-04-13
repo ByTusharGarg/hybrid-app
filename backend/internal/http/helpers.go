@@ -22,8 +22,8 @@ func nextRequiredStep(user *domain.User) string {
 	if len(user.Questionnaire) == 0 {
 		return "questionnaire"
 	}
-	if user.VerificationStatus != "verified" {
-		return "gender_verification"
+	if user.VerificationStatus != "verified" && user.LiveVideoStatus != "verified" {
+		return "live_video_verification"
 	}
 	if !user.OnboardingCompleted {
 		return "profile_setup"

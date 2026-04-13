@@ -25,6 +25,7 @@ See [internal/service/architecture.md](/Users/devmunjal/Desktop/per/hybrid-app/b
 - Onboarding steps:
   - questionnaire
   - gender verification
+  - live-video verification session + decision
   - profile setup
 - Sparks wallet:
   - welcome bonus
@@ -38,6 +39,10 @@ See [internal/service/architecture.md](/Users/devmunjal/Desktop/per/hybrid-app/b
 - Discover feed, top picks, likes, matches, chats
 - Activity center and referral center
 - Profile fetch and update
+- Vault security metadata for secure chat surfaces
+- Vouch badge flow with 1-week premium unlock
+- Native AI teaser + web portal bridge
+- Web portal SSO, credit wallet, subscription, and inference policy endpoints
 
 ## Run
 
@@ -82,8 +87,12 @@ Every OTP challenge returns `123456` so frontend integration is easy during deve
 - `POST /api/v1/auth/register/verify-otp`
 - `POST /api/v1/auth/login/start`
 - `POST /api/v1/auth/login/verify-otp`
+- `POST /api/v1/auth/portal/link`
+- `POST /api/v1/auth/portal/exchange`
 - `POST /api/v1/onboarding/questionnaire`
 - `POST /api/v1/onboarding/gender-verification`
+- `POST /api/v1/onboarding/live-verification/start`
+- `POST /api/v1/onboarding/live-verification/complete`
 - `POST /api/v1/onboarding/profile`
 - `GET /api/v1/home`
 - `GET /api/v1/discover`
@@ -101,3 +110,13 @@ Every OTP challenge returns `123456` so frontend integration is easy during deve
 - `GET /api/v1/referrals`
 - `GET /api/v1/me`
 - `PATCH /api/v1/me`
+- `GET /api/v1/security/vault`
+- `GET /api/v1/vouch/status`
+- `POST /api/v1/vouch/invite`
+- `POST /api/v1/vouch/confirm`
+- `GET /api/v1/ai/personas`
+- `POST /api/v1/ai/teaser`
+- `GET /api/v1/web/wallet`
+- `POST /api/v1/web/billing/subscribe`
+- `POST /api/v1/web/billing/consume`
+- `GET /api/v1/web/inference/policy`

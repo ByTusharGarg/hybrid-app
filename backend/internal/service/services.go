@@ -9,6 +9,7 @@ type Services struct {
 	Wallet     *WalletService
 	Chat       *ChatService
 	Profile    *ProfileService
+	Ecosystem  *EcosystemService
 }
 
 func New(repo repository.Repository, idGen func(string) string) *Services {
@@ -19,5 +20,6 @@ func New(repo repository.Repository, idGen func(string) string) *Services {
 		Wallet:     NewWalletService(repo, idGen),
 		Chat:       NewChatService(repo, idGen),
 		Profile:    NewProfileService(repo),
+		Ecosystem:  NewEcosystemService(repo, idGen),
 	}
 }
